@@ -35,10 +35,35 @@ group by s."class") as k on c."class" = k.class
 --Корабли: Для классов, имеющих потери в виде потопленных кораблей и не менее 3 кораблей в базе данных, 
 --вывести имя класса и число потопленных кораблей.
 
+SELECT c.class, SUM(s.sunked)
+FROM classes c
+LEFT JOIN (SELECT t.name, t.class,
+	CASE WHEN o.result = 'sunk' THEN 1 ELSE 0 END AS sunked
+    FROM
+	(SELECT name, class
+     FROM ships
+     UNION
+     SELECT ship, result 
+     FROM outcomes) t
+    LEFT JOIN outcomes o ON t.name = o.ship) s ON s.class = c.class
+GROUP BY c.class
+HAVING COUNT(DISTINCT s.name) >= 3 AND SUM(s.sunked) > 0
+
 
 --task4
 --Корабли: Найдите названия кораблей, имеющих наибольшее число орудий среди 
 --всех кораблей такого же водоизмещения (учесть корабли из таблицы Outcomes).
+
+select name from
+(select name, displacement, numguns 
+from ships inner join classes on ships.class = classes.class 
+union 
+select ship, displacement, numguns 
+from outcomes inner join classes on outcomes.ship= classes.class) as t 
+inner join (select displacement, max(numGuns) as numguns 
+from ( select displacement, numguns from ships inner join classes on ships.class = classes.class 
+union select displacement, numguns from outcomes inner join classes on outcomes.ship= classes.class) as f 
+group by displacement) as n on t.displacement=n.displacement and t.numguns=n.numguns
 
 
 --task5
